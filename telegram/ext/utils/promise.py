@@ -83,7 +83,7 @@ class Promise:
         self.update = update
         self.error_handling = error_handling
         self.done = Event()
-        self._done_callback: Optional[Callable] = None
+        self._done_callback: List[Callable] = []
         self._result: Optional[RT] = None
         self._exception: Optional[Exception] = None
 
@@ -102,7 +102,8 @@ class Promise:
             self.done.set()
             if self._exception is None and self._done_callback:
                 try:
-                    self._done_callback(self.result())
+                    for callback in self._done_callback:
+                        callback(self.result())
                 except Exception as exc:
                     logger.warning(
                         "`done_callback` of a Promise raised the following exception."
@@ -148,7 +149,7 @@ class Promise:
         if self.done.wait(0):
             callback(self.result())
         else:
-            self._done_callback = callback
+            self._done_callback.append(callback)
 
     @property
     def exception(self) -> Optional[Exception]:

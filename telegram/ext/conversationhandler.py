@@ -628,6 +628,15 @@ class ConversationHandler(Handler[Update, CCT]):
         except DispatcherHandlerStop as exception:
             new_state = exception.state
             raise_dp_handler_stop = True
+        
+        if isinstance(new_state, Promise):
+                        new_state.add_done_callback(
+                            functools.partial(
+                                self._update_state,
+                                key=conversation_key
+                            )
+                        )
+        
         with self._timeout_jobs_lock:
             if self.conversation_timeout:
                 if dispatcher.job_queue is not None:
